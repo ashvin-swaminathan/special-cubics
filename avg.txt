@@ -1,0 +1,93 @@
+/* We define the function avg(signature,a,d,bmin,bmax,cmin,cmax) which takes the following as input:
+-- a real signature with value 1 or -1 (corresponding to totally real or complex cubic fields),
+-- x^3 and y^3 coefficients a and d for the defining binary cubic forms,
+-- bounds bmin, bmax and cmin, cmax for the values of b and c.
+The function prints the average 2-torsion in the class groups of the cubic number fields with the specified real 
+signature defined by maximal binary cubic forms of the shape ax^3 + bx^2y + cxy^2 + dy^3 with b lying in [bmin,bmax] 
+and c lying in [cmin,cmax]. For comparison, it also prints the average predicted by our results. */
+
+avg := function(signature,a,d,bmin,bmax,cmin,cmax)
+
+//Define the polynomial ring Z[x]
+R<x> := PolynomialRing(Integers());
+
+//Define the real numbers accurate to 5 decimal places
+Re := RealField(5);
+
+// Compute class group using GRH bound on norms of primes generating Cl(K)
+SetClassGroupBounds("GRH");
+
+//Initialize polynomial counters
+ total:=0; totalirr:=0; maxcount:=0;
+
+//Initialize 2-torsion element counter
+clcount:=0;
+
+ for b:=bmin to bmax by 1 do
+     for c:=cmin to cmax by 1 do
+        
+        //Count b's and c's for which we could have delta-dist orbits over R of type (1111)
+        bdcpos:=0;
+        if signature gt 0 and b*d gt 0 and c ge 0 then
+            bdcpos:=bdcpos+1;
+        end if;
+
+        //Compute discriminant
+        disc := b^2*c^2-27*a^2*d^2-4*a*c^3-4*b^3*d+18*a*b*c*d;
+
+        //Check discriminant has sign matching signature
+        if disc*signature gt 0 then
+            total := total+1;
+
+            //Define cubic polynomial
+             p := a*x^3+b*x^2+c*x+d;
+
+            //Check that polynomial defines a field
+            if IsIrreducible(p) then totalirr:=totalirr+1;
+
+                //Define number field K and ring of integers Ok
+                K<y> := NumberField(p);
+                Ok := MaximalOrder(K);
+
+                //Check that Ok is maximal order
+                discK := Discriminant(Ok);
+                if disc eq discK then
+                    maxcount:=maxcount+1;
+
+                    //Compute class group of K and 2-Sylow subgroup
+                    G1 := ClassGroup(K); H1 :=Sylow(G1,2);
+
+                    //Computer size of 2-torsion and add to total count
+                    o1:=NumberOfGenerators(H1);
+                    clcount:=clcount+2^o1;
+                end if;
+            end if;
+        end if;
+    end for;
+end for;
+
+//Computation of average predicted by our results
+nondelta := 2;
+delta := (3/14)*(bdcpos/total);
+if signature lt 0 then
+    nondelta := 3;
+    delta := (3/14);
+end if;
+prediction := nondelta + delta;
+
+discsign := "negative";
+if signature gt 0 then
+    discsign := "positive";
+end if;
+
+print "Family of binary cubics of the form",a,"x^3 + bx^2y + cxy^2 +",d,"y^3 having",discsign,"discriminant, where b runs from",bmin,"to",bmax,"and c runs from",cmin,"to",cmax;
+print "Total polynomials with",discsign,"discriminant considered:",total;
+print "Number of polynomials that are irreducible:",totalirr;
+print "Number of polynomials corresponding to maximal orders:",maxcount;
+print "Total number of 2-torsion elements in the class groups of these maximal orders:",clcount;
+print "Average size of the 2-torsion subgroup of the class group for these orders:",Re!(clcount/maxcount);
+print "Predicted theoretical average:",Re!(prediction);
+
+return "finished";
+end function;
+                    
