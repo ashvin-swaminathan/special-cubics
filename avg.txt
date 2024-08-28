@@ -1,12 +1,15 @@
-/* We define the function avg(signature,a,d,bmin,bmax,cmin,cmax) which takes the following as input:
--- a real signature with value 1 or -1 (corresponding to totally real or complex cubic fields),
--- x^3 and y^3 coefficients a and d for the defining binary cubic forms,
--- bounds bmin, bmax and cmin, cmax for the values of b and c.
-The function prints the average 2-torsion in the class groups of the cubic number fields with the specified real 
-signature defined by maximal binary cubic forms of the shape ax^3 + bx^2y + cxy^2 + dy^3 with b lying in [bmin,bmax] 
-and c lying in [cmin,cmax]. For comparison, it also prints the average predicted by our results. */
+/* We define the function avg(a,d,bclist,prediction).
 
-avg := function(signature,a,d,bmin,bmax,cmin,cmax)
+Inputs:
+-- x^3 and y^3 coefficients a and d for the defining binary cubic forms,
+-- a list of pairs (b,c) for the values of the x^2y and xy^2 coefficients
+-- The theoretical average predicted by our results for these inputs
+NOTE: The inputs must be such that across all (b,c) in bclist, the binary cubic forms ax^3 + bx^2y + cxy^2 + dy^3 have the same real signature and together satisfy or fail to satisfy the 2-adic conditions for existence of delta-distinguished orbits.
+
+Outputs:
+The function prints the average 2-torsion in the class groups of the cubic number fields defined by maximal binary cubic forms of the shape ax^3 + bx^2y + cxy^2 + dy^3 with (b,c) lying in the given list of pairs. */
+
+avg := function(a,d,bclist,prediction)
 
 //Define the polynomial ring Z[x]
 R<x> := PolynomialRing(Integers());
@@ -23,64 +26,95 @@ SetClassGroupBounds("GRH");
 //Initialize 2-torsion element counter
 clcount:=0;
 
- for b:=bmin to bmax by 1 do
-     for c:=cmin to cmax by 1 do
-        
-        //Count b's and c's for which we could have delta-dist orbits over R of type (1111)
-        bdcpos:=0;
-        if signature gt 0 and b*d gt 0 and c ge 0 then
-            bdcpos:=bdcpos+1;
-        end if;
+ for pair in bclist do
+     //Define b and c
+     b := pair[1];
+     c := pair[2];
 
-        //Compute discriminant
-        disc := b^2*c^2-27*a^2*d^2-4*a*c^3-4*b^3*d+18*a*b*c*d;
+     //Compute discriminant
+     disc := b^2*c^2-27*a^2*d^2-4*a*c^3-4*b^3*d+18*a*b*c*d;
 
-        //Check discriminant has sign matching signature
-        if disc*signature gt 0 then
-            total := total+1;
+     //Check discriminant has sign matching signature
+         total := total+1;
 
-            //Define cubic polynomial
-             p := a*x^3+b*x^2+c*x+d;
+         //Define cubic polynomial
+         p := a*x^3+b*x^2+c*x+d;
 
-            //Check that polynomial defines a field
-            if IsIrreducible(p) then totalirr:=totalirr+1;
+         //Check that polynomial defines a field
+         if IsIrreducible(p) then totalirr:=totalirr+1;
 
-                //Define number field K and ring of integers Ok
-                K<y> := NumberField(p);
-                Ok := MaximalOrder(K);
+             //Define number field K and ring of integers Ok
+             K<y> := NumberField(p);
+             Ok := MaximalOrder(K);
 
-                //Check that Ok is maximal order
-                discK := Discriminant(Ok);
-                if disc eq discK then
-                    maxcount:=maxcount+1;
+             //Check that Ok is maximal order
+             discK := Discriminant(Ok);
+             if disc eq discK then
+                 maxcount:=maxcount+1;
 
-                    //Compute class group of K and 2-Sylow subgroup
-                    G1 := ClassGroup(K); H1 :=Sylow(G1,2);
+                 //Compute class group of K and 2-Sylow subgroup
+                 G1 := ClassGroup(K); H1 :=Sylow(G1,2);
 
-                    //Computer size of 2-torsion and add to total count
-                    o1:=NumberOfGenerators(H1);
-                    clcount:=clcount+2^o1;
-                end if;
+                 //Computer size of 2-torsion and add to total count
+                 o1:=NumberOfGenerators(H1);
+                 clcount:=clcount+2^o1;
             end if;
         end if;
-    end for;
 end for;
 
 //Computation of average predicted by our results
-nondelta := 2;
-delta := (3/14)*(bdcpos/total);
+/*nondelta := 5/4;
+deltainf := bdcpos/total;
 if signature lt 0 then
-    nondelta := 3;
-    delta := (3/14);
+    nondelta := 3/2;
+    deltainf := 1;
 end if;
-prediction := nondelta + delta;
+deltal=1;
+deltar=1;
+listprimesa := PrimeDivisors(a);
+listprimesd := PrimeDivisors(d);
+for p in listprimesa do
+    if ((a mod p^2) gt 0) and ((d mod p) gt 0) then
+        deltal := deltal*(p^2-p+1)/(p^3-p+1);
+    end if;
+    if ((a mod p^2) eq 0) and ((d mod p) gt 0) then
+        deltal := deltal*(p-1)^2/(p^3-p+1);
+    end if;
+    if ((a mod p^2) gt 0) and ((d mod p) eq 0) and ((d mod p^2) gt 0) then
+        deltal := deltal/(p+1);
+    end if;
+    if ((a mod p^2) eq 0) and ((d mod p) eq 0) and ((d mod p^2) gt 0) then
+        deltal := deltal/p;
+    end if;
+end for;
+for p in listprimesd do
+    if ((d mod p^2) gt 0) and ((a mod p) gt 0) then
+        deltar := deltar*(p^2-p+1)/(p^3-p+1);
+    end if;
+    if ((d mod p^2) eq 0) and ((a mod p) gt 0) then
+        deltar := deltar*(p-1)^2/(p^3-p+1);
+    end if;
+    if ((d mod p^2) gt 0) and ((a mod p) eq 0) and ((a mod p^2) gt 0) then
+        deltar := deltar/(p+1);
+    end if;
+    if ((d mod p^2) eq 0) and ((a mod p) eq 0) and ((a mod p^2) gt 0) then
+        deltar := deltar/p;
+    end if;
+end for;
+
+chi := 1;
+if GCD(a,d) gt 1 then
+    chi := 0;
+end if;
+    
+prediction := nondelta + (deltar + deltal + chi*deltar*deltal)/2^((signature+3)/2) + delta;*/
 
 discsign := "negative";
 if signature gt 0 then
     discsign := "positive";
 end if;
 
-print "Family of binary cubics of the form",a,"x^3 + bx^2y + cxy^2 +",d,"y^3 having",discsign,"discriminant, where b runs from",bmin,"to",bmax,"and c runs from",cmin,"to",cmax;
+print "Family of binary cubics of the form",a,"x^3 + bx^2y + cxy^2 +",d,"y^3 having",discsign,"discriminant;
 print "Total polynomials with",discsign,"discriminant considered:",total;
 print "Number of polynomials that are irreducible:",totalirr;
 print "Number of polynomials corresponding to maximal orders:",maxcount;
