@@ -88,7 +88,7 @@ def check_left_suff_ram(a,b,c,d):
     list_of_primes = return_prime_factors(ak)
     for p in list_of_primes:
         if left_suff_ram_at_p(a,b,c,d,p) == 0:
-            return 1
+            return 0
     return 1
 
 # Checks if a binary cubic form is right sufficiently ramified
