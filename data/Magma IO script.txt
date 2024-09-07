@@ -66,10 +66,10 @@ Loop through cases and buckets
 #######*/
 
 // Set range
-range := [1..1];
+// range := [1..1];
 
 
-// For cases in range compute average and multiset 2-torsion and write to file
+// For cases in range compute average and multiset 2-torsion and write to files
 for casename in case_names[range] do 
 
     // Set directory name based on the case
