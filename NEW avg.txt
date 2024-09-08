@@ -1,0 +1,108 @@
+/*#######
+Setup
+#######*/
+
+R<x> := PolynomialRing(Integers());
+SetClassGroupBounds("GRH");
+
+/*#######
+Aggregates the number of generators in the 2-torsion subgroups
+#######*/
+
+avg := function(a,d,bclist)
+
+    //Initialize polynomial counters
+    total:=0; totalirr:=0; maxcount:=0;
+
+    //Initialize class group counter
+    clcount2:= {* *};
+
+    for pair in bclist do
+        //Define b and c
+        b := pair[1];
+        c := pair[2];
+
+        //Compute discriminant
+        disc := b^2*c^2-27*a^2*d^2-4*a*c^3-4*b^3*d+18*a*b*c*d;
+
+        //Check discriminant has sign matching signature
+            total := total+1;
+	    print total,#bclist;
+
+            //Define cubic polynomial
+            p := a*x^3+b*x^2+c*x+d;
+
+            //Check that polynomial defines a field
+            if IsIrreducible(p) then totalirr:=totalirr+1;
+
+                //Define number field K and ring of integers Ok
+                K<y> := NumberField(p);
+                Ok := MaximalOrder(K);
+
+                //Check that Ok is maximal order
+                discK := Discriminant(Ok);
+                if disc eq discK then
+                    maxcount:=maxcount+1;
+
+                    //Compute class group of K
+                    G := ClassGroup(K);
+
+                    //Includes in clcount
+                    Include(~clcount2,NumberOfGenerators(Sylow(G,2)));
+                end if;
+            end if;
+    end for;
+    return clcount2; 
+end function;
+
+/*#######
+Case names
+#######*/
+
+case_names := Split(Read("casenames"));
+
+/*#######
+Loop through cases and buckets
+#######*/
+
+// Set range
+range := [1..25];
+
+
+// For cases in range compute average and multiset 2-torsion and write to files
+for casename in case_names[range] do 
+
+    // Set directory name based on the case
+    directoryname := "data" cat casename cat "/";
+
+    // List relative bucket paths
+    bucket_paths := [directoryname cat y: y in Split(Read(directoryname cat "bucketnames"))];
+
+    // Calculate a and d
+    a := StringToInteger(casename[1]);
+    d := StringToInteger(casename[2]);
+
+    // Loop over relative bucket paths writing to file average 2-torsion averages and multiset 2-torsion
+    for bucketpath in bucket_paths do
+        print bucketpath;
+        pairsbc := Read(bucketpath);
+        pairsbc := StringToIntegerSequence(pairsbc);
+        L := [];
+        for i in [1..#pairsbc] do
+            if IsOdd(i) then
+                Append(~L,<pairsbc[i],pairsbc[i+1]>);
+            end if; 
+        end for;
+        clcount2 := avg(a,d,L);
+        clcount2sizes := {* 2^x : x in clcount2*};
+        if #clcount2 eq 0 then 
+            average2torsion := 0; 
+        else 
+            average2torsion := &+{* 2^x : x in clcount2*} / #clcount2;
+        end if;
+        average2torsionpath := bucketpath cat " Average 2-Torsion";
+        clcount2sizespath := bucketpath cat " Multiset 2-Torsion";
+        PrintFile(average2torsionpath,<average2torsion,Real(average2torsion),#clcount2> : Overwrite := true); 
+        PrintFileMagma(clcount2sizespath,clcount2sizes : Overwrite := true);
+    end for;
+end for;
