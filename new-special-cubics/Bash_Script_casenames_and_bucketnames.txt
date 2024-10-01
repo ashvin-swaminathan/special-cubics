@@ -1,0 +1,5 @@
+for dir in */; do
+  [ -d "$dir" ] && ls "$dir" | grep -v "bucketnames" | paste -sd '\n' - > "${dir}bucketnames"
+done
+
+find . -maxdepth 1 -type d -not -name '.' | sed 's|^\./||' > casenames
