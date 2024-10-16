@@ -13,3 +13,5 @@ python3 generate_fields.py
 load "NEW avg.txt"; 
 
 The code is adapted from a program originally written by Manjul Bhargava.
+
+The data included in the tables in our paper can be found in the directory "new-special-cubics".
