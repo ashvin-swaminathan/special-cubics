@@ -10,6 +10,6 @@ python3 generate_fields.py
 
 (2) Use the magma script avg.txt to compute the average 2-torsion in the class groups of the cubic fields corresponding to the output of step (1). In magma, this can be done using the command
 
-load "avg.txt"; 
+load "NEW avg.txt"; 
 
 The code is adapted from a program originally written by Manjul Bhargava.
